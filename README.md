@@ -4,7 +4,26 @@ Implementations of adversarial attack & defense methods in ml.
 
 ---
 
-## Notes
+## Best Performance
+
+- PGD
+    - Params:
+        ```
+        eps: 8.0/255.0,
+        eps_iter: 2.0/255.0,
+        steps: 7
+        ```
+    - Results:
+        ```
+        Test Accuracy: 82/90
+        Target Label: 7
+        Attack Success Rate: 91%
+        Distance: 1.3890866
+        Number of Queries: 720
+        Leaderboard Score: ~91.12566
+        ```
+
+## Resources
 
 - [GAMA-FW](https://arxiv.org/abs/2011.14969):
     - Relatively new method (2020).
