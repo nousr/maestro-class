@@ -13,7 +13,7 @@ from transformers.data.data_collator import default_data_collator
 from Maestro.attacker_helper.attacker_request_helper import virtual_model
 
 # device
-device = 'gpu' if is_available() else 'cpu'
+device = 'cuda:0' if is_available() else 'cpu'
 
 """
 GLOBAL PARAMS
