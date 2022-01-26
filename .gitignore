@@ -1,3 +1,7 @@
+# for macos
+Maestro/.DS_Store
+Maestro/server/.DS_Store
+
 # data/
 models_temp/
 __pycache__/
