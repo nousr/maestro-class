@@ -12,6 +12,9 @@ from typing import List, Iterator, Dict, Tuple, Any, Type
 from transformers.data.data_collator import default_data_collator
 from Maestro.attacker_helper.attacker_request_helper import virtual_model
 
+# device
+device = 'gpu' if is_available() else 'cpu'
+
 
 class ProjectAttack:
     def __init__(
@@ -28,10 +31,11 @@ class ProjectAttack:
 
     def attack(self, original_image, labels, target_label, eps=8.0/255.):
         
+        # idk they did this in the FGSM code
         targets = [target_label]*len(labels)
     
         # turn original image into a float tensor
-        original_image = torch.from_numpy(original_image)
+        original_image = torch.from_numpy(original_image).to(device)
 
         # init the adversarial image
         adv_img = original_image.clone().detach()
@@ -45,17 +49,20 @@ class ProjectAttack:
             # get the grad loss wrt input
             adv_img = adv_img.numpy()
             data_grad = self.vm.get_batch_input_gradient(adv_img, targets) 
-            data_grad = torch.FloatTensor(data_grad)
-            
-            adv_img = torch.FloatTensor(adv_img)
+
+            # convert to pytorch tensors
+            data_grad = torch.FloatTensor(-data_grad).to(device)
+            adv_img = torch.FloatTensor(adv_img).to(device)
             
             # determine sign of gradient
             grad_sign = data_grad.sign()
             
-            adv_img = adv_img.detach() + eps * -grad_sign
+            # move the adversarial image in the direction of delta
+            adv_img = adv_img.detach() + eps * grad_sign
             delta = torch.clamp(adv_img - original_image, min=-eps, max=eps)
             adv_img = torch.clamp(original_image + delta, min=0, max=1)
             adv_img = adv_img.detach()
         
+        # return as a numpy array
         return adv_img.numpy()
         
