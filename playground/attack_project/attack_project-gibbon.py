@@ -40,6 +40,15 @@ class ProjectAttack:
 
         """
         PGD Implementation w/ scheduled epsilon
+
+        get an image
+        for i in range():
+            add a bit of noise
+            check check prediction
+            if success
+                return 
+            otherwise
+                continue
         """
 
         # CIFAR10 classes
@@ -84,15 +93,25 @@ class ProjectAttack:
 
                 # move the adversarial image in the direction of delta
                 adv_img = adv_img.detach() + eps_iter * grad_sign
+
+                # finds how much we've changed from the original image
                 delta = torch.clamp(adv_img - original, min=-eps, max=eps)
                 adv_img = torch.clamp(original + delta, min=0, max=1)
+
+                # prepare to send to virtual machine
                 adv_img = adv_img.detach().numpy()
 
-                # check prediction & return if success
+                # get logit values from
                 logits = self.vm.get_batch_output(adv_img, all_classes)
+
+                # convert back to pytorch
                 logits = torch.tensor(logits).to(device)
+
+                # convert logits to probability dist
                 probs = nn.Softmax(dim=1)(logits).detach().numpy()
-                if (np.argmax(probs) == 7):
+
+                # check prediction
+                if (np.argmax(probs) == targets[0]):
                     return adv_img
 
         # if we got here...oof
