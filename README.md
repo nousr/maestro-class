@@ -9,18 +9,19 @@ Implementations of adversarial attack & defense methods in ml.
 - PGD
     - Params:
         ```
-        eps: 8.0/255.0,
-        eps_iter: 2.0/255.0,
-        steps: 7
+        eps: 15/255
+        eps_iter: 7.5.0/255.0
+        steps: 15 (with random restarts & 5 attempts)
         ```
     - Results:
         ```
-        Test Accuracy: 82/90
+        Test Accuracy: 90/90
         Target Label: 7
-        Attack Success Rate: 91%
-        Distance: 1.3890866
-        Number of Queries: 720
-        Leaderboard Score: ~91.12566
+        Attack Success Rate: 100%
+        Distance: 1.395
+        Number of Queries: 858
+        Leaderboard Score: ~97.186
+        Leaderboard Score v2: 94.1579
         ```
 
 ## Resources
