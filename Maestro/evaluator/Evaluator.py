@@ -195,10 +195,18 @@ class Evaluator:
         else:
             score = 
         '''
+        # Old Scores
         grade_score = (final_acc == 1.0) * 7.0 + (number_queries < q_threshold) * 2.0 + (distance < l2_threshold) * 1.0
         leaderboard_score = min(final_acc,1.0) * 70 + (max(q_threshold-number_queries, 0) / q_threshold) * 20 + (max(l2_threshold-distance, 0)/l2_threshold) * 10
+
+        n_grade_score = (final_acc == 1.0) * 5.0 + (number_queries < q_threshold) * 2.5 + (distance < l2_threshold) * 2.5
+        n_leaderboard_score = min(final_acc,1.0) * 50 + (max(q_threshold-number_queries, 0) / q_threshold) * 25 + (max(l2_threshold-distance, 0)/l2_threshold) * 25
+
         print("Grade Score: ",grade_score)
         print("Leaderboard Score: ",leaderboard_score)
+        print("Grade Score v2: ",n_grade_score)
+        print("Leaderboard Score v2: ",n_leaderboard_score)
+
         metrics = self._metrics_dict(grade_score, leaderboard_score, final_acc, cost_time, distance, number_queries)
         return metrics
 
