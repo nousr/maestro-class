@@ -25,9 +25,9 @@ class ProjectAttack:
         vm,
         image_size: List[int],
         l2_threshold=7.5,
-        steps = 7,
-        eps = 8.0/255.0,
-        eps_iter = 2.0/255.0,
+        steps = 15,
+        eps = 7.5/255.0,
+        eps_iter = 4.5/255.0,
     ):
         self.vm = vm
         self.image_size = image_size
@@ -37,6 +37,7 @@ class ProjectAttack:
         self.eps_iter = eps_iter
 
     def attack(self, original, labels, targets):
+
         """
         PGD Implementation
         """
@@ -52,33 +53,45 @@ class ProjectAttack:
         # turn original image into a float tensor
         original = torch.from_numpy(original).to(device)
 
-        # init the adversarial image
-        adv_img = original.clone().detach()
+        for i in range(5):
 
-        # add some noise
-        adv_img = adv_img + torch.empty_like(adv_img).uniform_(-eps, eps)
-        adv_img = torch.clamp(adv_img, min=0, max=1).detach()
+            # walk the eps up if we're failing
+            if i > 0:
+                eps += 0.04
+                eps_iter += 0.0055
+            
+            # init the adversarial image
+            adv_img = original.clone().detach() 
 
+            # add some noise
+            adv_img = adv_img + torch.empty_like(adv_img).uniform_(-eps, eps)
+            adv_img = torch.clamp(adv_img, min=0, max=1).detach()
 
-        for step in range(steps):
+            for step in range(steps):
 
-            # get the grad loss wrt input
-            adv_img = adv_img.numpy()
-            data_grad = self.vm.get_batch_input_gradient(adv_img, targets) 
+                # get the grad loss wrt input
+                adv_img = adv_img.numpy()
+                data_grad = self.vm.get_batch_input_gradient(adv_img, targets) 
 
-            # convert to pytorch tensors
-            data_grad = torch.FloatTensor(-data_grad).to(device)
-            adv_img = torch.FloatTensor(adv_img).to(device)
+                # convert to pytorch tensors
+                data_grad = torch.FloatTensor(-data_grad).to(device)
+                adv_img = torch.FloatTensor(adv_img).to(device)
 
-            # determine sign of gradient
-            grad_sign = data_grad.sign()
+                # determine sign of gradient
+                grad_sign = data_grad.sign()
 
-            # move the adversarial image in the direction of delta
-            adv_img = adv_img.detach() + eps_iter * grad_sign
-            delta = torch.clamp(adv_img - original, min=-eps, max=eps)
-            adv_img = torch.clamp(original + delta, min=0, max=1)
-            adv_img = adv_img.detach()
+                # move the adversarial image in the direction of delta
+                adv_img = adv_img.detach() + eps_iter * grad_sign
+                delta = torch.clamp(adv_img - original, min=-eps, max=eps)
+                adv_img = torch.clamp(original + delta, min=0, max=1)
+                adv_img = adv_img.detach()
 
-        # return as a numpy array
+                # check prediction 
+                logits = self.vm.get_batch_output(adv_img.numpy(), [0,1,2,3,4,5,6,7,8,9])
+                logits = torch.tensor(logits).to(device)
+                probs = nn.Softmax(dim=1)(logits).detach().numpy()
+                if (np.argmax(probs) == 7):
+                    return adv_img.numpy()
+
+        # if we got here...oof
         return adv_img.numpy()
-
