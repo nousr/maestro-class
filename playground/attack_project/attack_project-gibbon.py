@@ -39,8 +39,11 @@ class ProjectAttack:
     def attack(self, original, labels, targets):
 
         """
-        PGD Implementation
+        PGD Implementation w/ scheduled epsilon
         """
+
+        # CIFAR10 classes
+        all_classes = [0,1,2,3,4,5,6,7,8,9]
 
         # grab hyperparameters from class
         eps = self.eps
@@ -53,7 +56,7 @@ class ProjectAttack:
         # turn original image into a float tensor
         original = torch.from_numpy(original).to(device)
 
-        for i in range(5):
+        for i in range(10):
 
             # walk the eps up if we're failing
             if i > 0:
@@ -70,7 +73,6 @@ class ProjectAttack:
             for step in range(steps):
 
                 # get the grad loss wrt input
-                adv_img = adv_img.numpy()
                 data_grad = self.vm.get_batch_input_gradient(adv_img, targets) 
 
                 # convert to pytorch tensors
@@ -84,14 +86,14 @@ class ProjectAttack:
                 adv_img = adv_img.detach() + eps_iter * grad_sign
                 delta = torch.clamp(adv_img - original, min=-eps, max=eps)
                 adv_img = torch.clamp(original + delta, min=0, max=1)
-                adv_img = adv_img.detach()
+                adv_img = adv_img.detach().numpy()
 
-                # check prediction 
-                logits = self.vm.get_batch_output(adv_img.numpy(), [0,1,2,3,4,5,6,7,8,9])
+                # check prediction & return if success
+                logits = self.vm.get_batch_output(adv_img, all_classes)
                 logits = torch.tensor(logits).to(device)
                 probs = nn.Softmax(dim=1)(logits).detach().numpy()
                 if (np.argmax(probs) == 7):
-                    return adv_img.numpy()
+                    return adv_img
 
         # if we got here...oof
-        return adv_img.numpy()
+        return adv_img
